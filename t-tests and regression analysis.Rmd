@@ -1,0 +1,223 @@
+---
+title: "t-tests and regression analysis"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+bibliography: references.bib
+---
+
+## Introduction
+Haun et al. [-@Haun2019] conducted their study on 30 trained men who performed a 6 weeks resistance training intervention. Two groups were formed based on training outcome measures, where the top and bottom third of the data set were assigned to a high- (*n* = 10) and low-responder group (*n* = 10), respectively. The goal of the study was to examine if HIGH responders would experience greater increases in myonuclear accretion as well as biomarkers related to ribosome biogenesis, androgen signaling, mTORc1 signaling, and mitochondrial biogenesis relative to LOW responders.
+
+The goal of this report is to compare the average cross-sectional area at T1 between HIGH and LOW with a simple t-test, and then compare the results to a regression model.
+
+#### Null hypothesis
+> There is no difference in average cross-sectional area at T1 between HIGH and LOW
+
+#### Alternative hypothesis
+> The average cross-sectional area at T1 is significantly (*p* = 0.050) greater in HIGH compared to LOW
+
+## Methods
+An independent/unpaired, two sample t-test was used to compare the average cross-sectional area at T1 (AVG_CSA_T1) between the two groups. A regression model was also used to fit the data, and tests to check for constant variance, normal residuals and problematic observations were performed. 
+
+
+## Results
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE, , fig.keep='first'}
+######## Preparing for the tests ######## 
+# Loading needed packages
+library(tidyverse)
+library(knitr)
+library(broom)
+library(readxl)
+
+# Downloading and saving the file
+download.file(url = "https://ndownloader.figstatic.com/files/14702420", destfile = "./data/hypertrophy.csv")
+
+# Reading and attaching file to "hypertrophy"
+hypertrophy <- read_csv("./data/hypertrophy.csv") 
+
+# Selecting the variables of interest (AVG_CSA_T1)
+hyp <- hypertrophy %>% # Attaching to "hyp"
+  select(SUB_ID, CLUSTER, AVG_CSA_T1) %>% # Selecting variables of interest
+  
+  mutate(CLUSTER = factor(CLUSTER, levels = c("LOW", "HIGH"))) %>% 
+  
+  filter(!is.na(CLUSTER), # Removing participants that don´t belong to any group
+         !is.na(AVG_CSA_T1))  # Removing missing values in AVG_CSA_T1
+
+
+
+
+######## t-test ######## 
+# Using an independent/unpaired, two sample t-test to compare "AVG_CSA_T1" between the two groups (using hyp)
+ttest <- t.test(AVG_CSA_T1 ~ CLUSTER, data = hyp, var.equal = TRUE)  # Want to explain "AVG_CSA_T1" based on group HIGH and LOW (CLUSTER)
+
+# Storing the statistics as objects to use in the report
+# The test statistic
+t <- ttest$statistic  # t = 2.749118 
+
+# Mean difference 
+estimate1 <- ttest$estimate[1]  # Mean LOW = 4538.571 
+estimate2 <- ttest$estimate[2]  # Mean HIGH = 3588.428
+mdiff <- (ttest$estimate[2] - ttest$estimate[1]) # Mean difference =  -950.143 
+
+# Confidence interval
+ci1 <- ttest$conf.int[1]   # Lower CI = 224.0279
+ci2 <- ttest$conf.int[2]   # Higher CI = 1676.258, conf level = 0,95
+
+# The p-value
+p <- ttest$p.value # p = 0.01319714
+
+# Degres of freedom
+df <- ttest$parameter # df = 18
+
+
+
+
+
+######## Regression model ######## 
+# Using a linear model (lm()) to fit the data
+m1 <- lm(AVG_CSA_T1 ~ CLUSTER, data = hyp) # Storing the regression model as m1
+summary(m1) # Showing the results
+
+
+# Coefficients
+coef(m1)
+# Have found the coefficients with the t-test and regression model, but can do it as this as well. 
+# OBS! The Intercept is LOW (4538.571), and the real estimate for HIGH is not -950.143 as it says here and in the regression model, but 4538.571 - 950.143 = 3588.428, just as we find using the t-test.
+
+# Confidence intervals
+confint(m1, level=0.95) 
+# Lower = 224.0279, Higher = 1676.2581. The same result as when we use the t-test.
+
+# Printing the regression table using the broom package (tidy()) and kable()
+rtable <- tidy(m1) %>% 
+  kable(col.names = c("", "Estimate", "SE", "t-statistic", "p-value"), # Column names
+        digits = c(NA, 1, 1, 2, 4),# Deciding how many decimals at each value
+        caption = "Table 1: Regression analysis") 
+        # The intercept is LOW, and CLUSTERHIGH is HIGH
+
+# Making a plot for the regression model
+hyp %>%
+  ggplot(aes(CLUSTER, AVG_CSA_T1)) + 
+  geom_point(size = 3, fill = "lightblue", shape = 21) +
+  geom_smooth(method = "lm") +
+  labs(x = "Groups",
+       y = "Average CSA (cm2)",
+       title = "Figure 1: Average cross-sectional area at T1" ) +
+  theme_minimal()
+# We can see that there is a outlier in the data set, and therefore we should take a closer look at it.
+
+
+
+
+
+######## Checking for constant variance ######## 
+# Creating a residual plot, first getting the residuals and fitted values
+hyp$resid <- residuals(m1)  # Residuals
+hyp$fitted <- fitted(m1)  # Fitted values
+
+# Plotting the residuals against the fitted values
+hyp %>%
+  mutate(st.resid = resid/sd(resid)) %>% # Making standardized residuals
+  ggplot(aes(fitted, st.resid)) + 
+  geom_hline(yintercept = 0) +
+  geom_point(size = 3, fill = "lightblue", shape = 21) +
+  labs(x = "Fitted values",
+       y = "Standardized residuals") +
+  theme_minimal()
+    # All the residuals, except for one, is less than 1.5 SD away from their predicted value. The variance is quite constant, if we do not look at the outlier
+
+
+
+######## Checking for normal residuals ########
+# Checking if the residuals are normal by creating a plot that plot every observed residual against its theoretical position in a normal distribution
+hyp %>%
+  mutate(st.resid = resid/sd(resid)) %>% 
+  ggplot(aes(sample = st.resid)) +
+  stat_qq(size = 3, fill = "lightblue", shape = 21) +
+  stat_qq_line() +
+  labs(x = "Theoretical",
+       y = "Sample") +
+  theme_minimal()
+  # All the values, except for the outlier, follows the straight line. All the values, except for the outlier, are normal distributed 
+
+# Can also show the above using residual plots (four plots).
+plot(m1)
+# The outlier is quite clear in all the plots
+
+
+
+
+######## Independent observations ########
+# The data comes from independent observations, as we only use values from T1
+
+
+
+######## Do problematic observations matter? 
+# Saw that there was one potentially problematic observation in the residual plot. 
+# Labeling the observations in the residual plot to find out what observation is problematic.
+
+hyp %>%
+  mutate(st.resid = resid/sd(resid)) %>%
+  ggplot(aes(fitted, st.resid, label = SUB_ID)) + 
+  geom_hline(yintercept = 0) +
+  geom_point(size = 3, fill = "lightblue", shape = 21) +
+  geom_label(nudge_x = 20, nudge_y = 0) +
+  labs(x = "Fitted values",
+       y = "Standardized residuals") +
+  theme_minimal()
+# Finding that it is subject MRV016 that has the largest residual and and potentially could be a problematic observation
+
+# Checking if the potentially problematic observation MRV016 really is problematic. Doing the model without the observation to see if this changes the conclusion of the analysis.
+hyp_reduced <- hypertrophy %>% # Creating a new object without MRV016
+  select(SUB_ID, CLUSTER, AVG_CSA_T1) %>% # Selecting variables of interest
+  filter(SUB_ID != "MRV016") %>% # Removing observation MRV016
+  mutate(CLUSTER = factor(CLUSTER, levels = c("LOW", "HIGH"))) %>% 
+  filter(!is.na(CLUSTER), # Removing participants that don´t belong to any group
+         !is.na(AVG_CSA_T1))  # Removing missing values in AVG_CSA_T1
+
+# Making a regression model without MRV016
+m1_reduced <- lm(AVG_CSA_T1 ~ CLUSTER, data = hyp_reduced)
+summary(m1_reduced)
+# All the values change a bit
+
+# The delta beta calculates the percentage change in the slope as a consequence of removing the observation with the greatest residual
+delta_beta <- 100 * (coef(m1_reduced)[2]/coef(m1)[2] - 1)
+# Removing the outlier changes the slope with -0.2666861 %. Ergo, not a lot.
+
+# We can conclude that the potentially problematic observation do not matter, and that we can safely use all the data points in the analysis, as done above under "t-test" and "regression model"
+
+# We can also conclude that the t-test and the regression model provides the same results
+
+
+
+```
+
+```{r, echo=FALSE, results='asis', warning=FALSE, message=FALSE}
+rtable
+
+
+```
+
+
+The average cross-sectional area was `r round(estimate2, 1)` cm^2^ at T1 in HIGH, and `r round(estimate1, 1)` cm^2^ at T1 in LOW. The difference between the groups was `r round(mdiff, 1)` cm^2^ (95% CI: [`r round(ci1, 1)`, `r round(ci2, 1)`], *t*(`r round(df, 1)`) = `r round(t,2)`, *p* = `r round(p, 3)`).
+
+
+## Discussion
+
+As mentioned, the data was tested for constant variance and normal residuals, and a potentially problematic observation was found. Thus, the regression analysis was performed without the potentially problematic observation to check if this would change the conclusion of the analysis. We found that removing this observation changed the slope with `r round(delta_beta, 3)` %. We therefore concluded that the potentially problematic observation did not matter, and that we safely could use all the data points in the analysis.
+
+We compared the results from the t-test and regression model, and found that the two testes produce the same results (mean, t-statistic, p-value and 95 percent confidence intervals).
+
+Regarding the results, we found that there is a significant (*p* = `r round(p, 3)`) difference in average cross-sectional area at T1 between HIGH and LOW, but the average cross-sectional area at T1 is not significantly (*p* = 0.050) greater in HIGH compared to LOW, it is significantly greater in LOW compared to HIGH.
+
+As the confidence interval do not contain 0 (95% CI: [`r round(ci1, 2)`, `r round(ci2, 2)`]), we can with some certainty reject the null hypothesis that states that "there is no difference in average cross-sectional area at T1 between HIGH and LOW." 
+
+The findings from Haun et al. [-@Haun2019] therefore suggests that low responders have a greater average cross-sectional area than high responders.
+
+
+
+## References
+
