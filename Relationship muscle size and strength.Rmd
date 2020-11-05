@@ -3,130 +3,214 @@ title: "Relationship between muscle mass and strength"
 output: html_document
 editor_options: 
   chunk_output_type: console
+bibliography: references.bib
 ---
 
-## Introduction
-Haun et al. (2019) conducted their study on 30 trained men who performed a 6 weeks resistance training intervention. Two groups were formed based on training outcome measures, where the top and bottom third of the data set were assigned to a high- (*n* = 10) and low-responder group (*n* = 10), respectively. The goal of the study was to examine if HIGH responders would experience greater increases in myonuclear accretion as well as biomarkers related to ribosome biogenesis, androgen signaling, mTORc1 signaling, and mitochondrial biogenesis relative to LOW responders.
+# The relationship between average cross-sectional area and 3 RM squat
 
-The goal of this report is to estimate the relationship between muscle mass and strength, measured as lean body mass and 3RM squat at T1, respectively. The whole data set was used, meaning we used data from all the participants.
+## Introduction
+Haun et al. [-@Haun2019] conducted their study on 30 trained men who performed a 6 weeks resistance training intervention. Two groups were formed based on training outcome measures, where the top and bottom third of the data set were assigned to a high- (*n* = 10) and low-responder group (*n* = 10), respectively. The goal of the study was to examine if high responders would experience greater increases in myonuclear accretion as well as biomarkers related to ribosome biogenesis, androgen signaling, mTORc1 signaling, and mitochondrial biogenesis relative to low responders.
+
+Maughan et al. [-@Maughan1983] have found a positive correlation between muscle strength and cross-sectional area in the knee-extensor muscles in both males and females. The goal of this report is to estimate the relationship between muscle mass and strength, measured as average cross-sectional area and 3 RM squat, respectively, both at T1. The whole data set was used, meaning we used data from all of the participants.
 
 #### Null hypothesis
-> At T1, there is no correlation between muscle mass measured as lean body mass and muscle strength measured as 3RM squat
+> At T1, there is no correlation between muscle mass measured as average cross-sectional area and muscle strength measured as 3 RM squat
 
 #### Alternative hypothesis
-> At T1, there is a positive correlation between muscle mass measured as lean body mass and muscle strength measured as 3RM squat
+> At T1, there is a positive correlation between muscle mass measured as average cross-sectional area and muscle strength measured as 3 RM squat
 
 ## Methods
-Pearson's product-moment correlation was used to estimate the correlation between lean body mass and 3RM squat at T1. r < 0,1 = trivial, 0,1-0,3 = small, 0,3-0,5 = moderate, 0,5-0,7 = large, 0,7-0,9 = very large, 0,9 = almost perfect and 1.0 = perfect correlation (Hopkins et al., 2009). The data was plotted as single data points, and a straight line representing the linear regression model was added.
+Pearson's product-moment correlation was used to estimate the correlation between average cross-sectional area and 3 RM squat at T1. r < 0.1 = trivial, 0.1-0.3 = small, 0.3-0.5 = moderate, 0.5-0.7 = large, 0.7-0.9 = very large, 0.9 = almost perfect and 1.0 = perfect correlation [@Hopkins2009]. A regression model was also used to fit the data, with the average cross-sectional area as the predictor, and 3 RM squat as the dependent variable. Tests to check for constant variance, normal residuals and problematic observations were performed. No problematic observations were found, so we can safely use all the observations in the analysis
 
 ## Results
-```{r, echo=FALSE, results='asis', warning=FALSE, message=FALSE}
+
+```{r, include=FALSE, warning=FALSE, message=FALSE}
+# I use this chunck to run all the code
+
+
 ######## Preparing for the tests ######## 
 # Loading needed packages
 library(tidyverse)
 library(knitr)
 library(broom)
+library(readxl)
 
 # Downloading and saving the file
 download.file(url = "https://ndownloader.figstatic.com/files/14702420", destfile = "./data/hypertrophy.csv")
 
 # Reading and attaching file to "hypertrophy"
-hypertrophy <- read_csv("./data/hypertrophy.csv")
+hypertrophy <- read_csv("./data/hypertrophy.csv") 
 
-# Selecting the variables of interest (DXA_LBM_1, Squat_3RM_kg)
+# Selecting the variables of interest (AVG_CSA_T1, Squat_3RM_kg)
 hyp <- hypertrophy %>% # Attaching to "hyp"
-  select(SUB_ID, DXA_LBM_1, Squat_3RM_kg, ) %>% # Selecting variables of interest
+  select(SUB_ID, AVG_CSA_T1, Squat_3RM_kg) %>% # Selecting variables of interest
   
   filter(!is.na(Squat_3RM_kg), # Removing missing values in Squat_3RM_kg
-         !is.na(DXA_LBM_1))  # Removing missing values in DXA_LBM_1
+         !is.na(AVG_CSA_T1))  # Removing missing values in AVG_CSA_T1
 
 
 
 ######## Correlations ######## 
-# Testing the correlation between "DXA_LBM_1" and "Squat_3RM_kg" using "hyp" as data
-c <- cor.test(hyp$DXA_LBM_1, hyp$Squat_3RM_kg)
-# The correlation is 0.6741231. Perfect correlation = -1 or 1, no correlation = 0
-# Ergo, in this data there is a good correlation between muscle size and strength
+# Testing the correlation between "AVG_CSA_T1" and "Squat_3RM_kg" using "hyp" as data
+corr <- cor(hyp$AVG_CSA_T1, hyp$Squat_3RM_kg)
 
+c <- cor.test(hyp$AVG_CSA_T1, hyp$Squat_3RM_kg)
 
-
-# Plotting the regression model
-hyp %>%
-  ggplot(aes(DXA_LBM_1, Squat_3RM_kg)) + 
-  geom_point() + 
-  geom_smooth(method = "lm") + 
-  labs(x = "Lean body mass (kg)",
-       y = "3RM squat (kg)",
-       title = "Figure1: The relationship between muscle mass and strength") +
-  theme_minimal()
-
+c
+# The correlation is 02068658. Perfect correlation = -1 or 1, no correlation = 0
+# Ergo, in this data there is no correlation between muscle size and strength
 
 
 
 ######## Storing the statistics as objects to use in the report ######## 
 
 # The p-value
-p <- c$p.value  # p = (4.421018e-05)
+p <- c$p.value   # p = 0.9135975
 
-# The correlation = 0.6741231 (see )
+# The correlation
+corr # corr = 02068658
 
 # The test statistic
-t <- c$statistic  # t = 4.8295
+t <- c$statistic  # t = 0.1094865 
 
 # Confidence interval
-ci1 <- c$conf.int[1]   # Lower CI = 0.4145287
-ci2 <- c$conf.int[2]   # Higher CI = 0.8322639, conf level = 0,95
+ci1 <- c$conf.int[1]    # Lower CI = -0.3421325
+ci2 <- c$conf.int[2]   # Higher CI = 0.3781376, conf level = 0.95
 
-# Degres of freedom
-df <- c$parameter  # df = 28
-
-
-```
-
-There was a 0.67 correlation between lean body mass and 3RM squat at T1 (95% CI: [`r round(ci1, 2)`, `r round(ci2, 2)`], *t*(`r round(df, 1)`) = `r round(t,3)`, *p* = `r round(p, 2)`).
+# Degrees of freedom
+df <- c$parameter # df = 28
 
 
-## Discussion
-The correlation estimate (0.67) is between 0.5 and 0.7, witch indicates a *large* positive correlation between lean body mass and 3RM squat at T1 (Hopkins et al., 2009). This is supported by the *p*-value (`r round(p, 2)`).
-
-As the confidence interval do not contain 0 (95% CI: [`r round(ci1, 2)`, `r round(ci2, 2)`]), we can with some certainty reject the null hypothesis that states that "at T1, there is no correlation between muscle mass measured as lean body mass and muscle strength measured as 3RM squat."
-
-The findings from Haun et al. (2019) therefore suggests that there is a *large* correlation between muscle mass and strength, measured as lean body mass and 3RM squat at T1.
-
-
-## References
-Haun, Cody T., Christopher G. Vann, C. Brooks Mobley, Shelby C. Osburn, Petey W. Mumford, Paul A. Roberson, Matthew A. Romero, et al. 2019. “Pre-Training Skeletal Muscle Fiber Size and Predominant Fiber Type Best Predict Hypertrophic Responses to 6 Weeks of Resistance Training in Previously Trained Young Men.” Journal Article. Frontiers in Physiology 10 (297). https://doi.org/10.3389/fphys.2019.00297.
-Hopkins, W. G., Marshall, S. W., Batterham, A. M. & Hanin, J. (2009). Progressive statistics for studies in sports medicine and exercise science. Med Sci Sports Exerc, 41(1), 3-13. https://doi.org/10.1249/MSS.0b013e31818cb278
-
-```{r, include=FALSE}
-#      Er dette nødvendig å ha med?
-# _____________________________________________ #
-###### Trengs egentlig regression model? Holder det med correlation og en figur?
 
 ######## Regression model ######## 
 # Using a linear model (lm()) to fit the data
-rm <- lm(Squat_3RM_kg ~ DXA_LBM_1, data = hyp) # Storing the regression model as m1
-summary(rm) # Showing the results
+m1 <- lm(Squat_3RM_kg ~ AVG_CSA_T1, data = hyp) # Storing the regression model as m1
+summary(m1) # Showing the results
+
+
+# Plotting the regression model
+rmodel <- hyp %>%
+  ggplot(aes(AVG_CSA_T1, Squat_3RM_kg)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") + 
+  labs(x = "Lean body mass (kg)",
+       y = "3 RM squat (kg)",
+       title = "Figure1: The relationship between muscle mass and strength") +
+  theme_minimal()
+
+rmodel
+
+# We can also conclude that the correlation and the regression model provides the same results
+
+
+## ---------------------------------------------------------------------------------
+# Tests to check for constant variance, normal residuals and problematic observations
+
+
+# Did not have to do this, but as I did, I am just saving the code here for later use
+# In the text I will write that the testes were performed, and no problematic observations were found, just like you said I could. 
 
 
 
-# Printing the regression table using the broom package (tidy()) and kable()
-tidy(rm) %>% 
-  kable(col.names = c("", "Estimate", "SE", "t-statistic", "p-value"), # Column names
-              digits = c(NA, 1, 1, 2, 4)) # Deciding how many decimals at each value
+######## Checking for constant variance ######## 
+# Creating a residual plot, first getting the residuals and fitted values
+hyp$resid <- residuals(m1)  # Residuals
+hyp$fitted <- fitted(m1)  # Fitted values
 
-# _____________________________________________ #
+# Plotting the residuals against the fitted values
+hyp %>%
+  mutate(st.resid = resid/sd(resid)) %>% # Making standardized residuals
+  ggplot(aes(fitted, st.resid)) + 
+  geom_hline(yintercept = 0) +
+  geom_point(size = 3, fill = "lightblue", shape = 21) +
+  labs(x = "Fitted values",
+       y = "Standardized residuals") +
+  theme_minimal()
+    # All the residuals, except for one, is less than 2.0 SD away from their predicted value. The variance is quite constant.
 
 
 
+######## Checking for normal residuals ########
+# Checking if the residuals are normal by creating a plot that plot every observed residual against its theoretical position in a normal distribution
+hyp %>%
+  mutate(st.resid = resid/sd(resid)) %>% 
+  ggplot(aes(sample = st.resid)) +
+  stat_qq(size = 3, fill = "lightblue", shape = 21) +
+  stat_qq_line() +
+  labs(x = "Theoretical",
+       y = "Sample") +
+  theme_minimal()
+  # Most of the values follows the straight line. The data is quite normal distributed. 
+
+# Can also show the above using residual plots (four plots).
+plot(m1)
 
 
-######## Comparing regression model and correlation ######## 
-# Display the p-value for the regression coefficient
-coef(summary(rm))[2, 4]       # Ta bort??
 
-# Display the p-value for the correlation coefficient
-p <- c$p.value  # The p-values are the same (4.421018e-05)
+######## Independent observations ########
+# The data comes from independent and paired observations, at T1.
+
+
+
+######## Do problematic observations matter? ########
+# Saw that there was one potentially problematic observation in the residual plot. 
+# Labeling the observations in the residual plot to find out what observation is problematic.
+
+hyp %>%
+  mutate(st.resid = resid/sd(resid)) %>%
+  ggplot(aes(fitted, st.resid, label = SUB_ID)) + 
+  geom_hline(yintercept = 0) +
+  geom_point(size = 3, fill = "lightblue", shape = 21) +
+  geom_label(nudge_x = 20, nudge_y = 0) +
+  labs(x = "Fitted values",
+       y = "Standardized residuals") +
+  theme_minimal()
+# Finding that it is subject MRV019 that has the largest residual and and potentially could be a problematic observation
+
+# Checking if the potentially problematic observation MRV019 really is problematic. Doing the model without the observation to see if this changes the conclusion of the analysis.
+hyp_reduced <- hypertrophy %>% # Creating a new object without MRV019
+  select(SUB_ID, AVG_CSA_T1, Squat_3RM_kg) %>% # Selecting variables of interest
+  filter(SUB_ID != "MRV019") %>% # Removing observation MRV019
+  filter(!is.na(Squat_3RM_kg), # Removing missing values in Squat_3RM_kg
+         !is.na(AVG_CSA_T1))  # Removing missing values in AVG_CSA_T1
+
+
+# Making a regression model without MRV019
+m1_reduced <- lm(Squat_3RM_kg ~ AVG_CSA_T1, data = hyp_reduced)
+summary(m1_reduced)
+# All the values change a bit
+
+# The delta beta calculates the percentage change in the slope as a consequence of removing the observation with the greatest residual
+delta_beta <- (100 * (coef(m1_reduced)[2]/coef(m1)[2] - 1))
+# Removing the outlier changes the slope with 61.41295  %. Ergo, quite much.
+
+
+# We can conclude that the potentially problematic observation **do matter**, and that we can not use all the data points in the analysis. Have to run both the t-test and regression analysis without MRV019. 
+
+## ---------------------------------------------------------------------------------
+
 ```
 
+```{r, echo=FALSE, results='asis', warning=FALSE, message=FALSE}
+# I use this chunck to print the regression figure
+
+rmodel
+
+```
+
+
+There was a `r round(corr, 2)` correlation between average cross-sectional area and 3 RM squat at T1 (95% CI: [`r round(ci1, 2)`, `r round(ci2, 2)`], *t*(`r round(df, 1)`) = `r round(t,3)`, *p* = `r round(p, 2)`).
+
+
+## Discussion
+
+The correlation estimate (`r round(corr, 2)`) is less than 0.1, which indicates a *trivial* correlation between average cross-sectional area and 3 RM squat at T1 [@Hopkins2009].
+
+
+As the confidence interval contain 0 (95% CI: [`r round(ci1, 2)`, `r round(ci2, 2)`]), we can not reject the null hypothesis that states that "at T1, there is no correlation between muscle mass measured as average cross-sectional area and muscle strength measured as 3 RM squat." This is supported by the *p*-value (`r round(p, 2)`).
+
+The findings from Haun et al. [-@Haun2019] therefore suggests that there is no correlation between average cross-sectional area and 3 RM squat in trained men before starting a training intervention.
+
+
+## References
 
