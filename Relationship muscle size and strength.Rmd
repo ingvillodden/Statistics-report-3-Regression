@@ -14,13 +14,13 @@ Haun et al. [-@Haun2019] conducted their study on 30 trained men who performed a
 Maughan et al. [-@Maughan1983] have found a positive correlation between muscle strength and cross-sectional area in the knee-extensor muscles in both males and females. The goal of this report is to estimate the relationship between muscle mass and strength, measured as average cross-sectional area and 3 RM squat, respectively, both at T1. The whole data set was used, meaning we used data from all of the participants.
 
 #### Null hypothesis
-> At T1, there is no correlation between muscle mass measured as average cross-sectional area and muscle strength measured as 3 RM squat
+> At T1, there is no correlation between muscle mass measured as average cross-sectional area and muscle strength measured as 3 RM squat, both when and when not controlling for body mass
 
 #### Alternative hypothesis
-> At T1, there is a positive correlation between muscle mass measured as average cross-sectional area and muscle strength measured as 3 RM squat
+> At T1, there is a positive correlation between muscle mass measured as average cross-sectional area and muscle strength measured as 3 RM squat, both when and when not controlling for body mass
 
 ## Methods
-Pearson's product-moment correlation was used to estimate the correlation between average cross-sectional area and 3 RM squat at T1. r < 0.1 = trivial, 0.1-0.3 = small, 0.3-0.5 = moderate, 0.5-0.7 = large, 0.7-0.9 = very large, 0.9 = almost perfect and 1.0 = perfect correlation [@Hopkins2009]. A regression model was also used to fit the data, with the average cross-sectional area as the predictor, and 3 RM squat as the dependent variable. Tests to check for constant variance, normal residuals and problematic observations were performed. No problematic observations were found, so we can safely use all the observations in the analysis
+Pearson's product-moment correlation was used to estimate the correlation between average cross-sectional area and 3 RM squat at T1. r < 0.1 = trivial, 0.1-0.3 = small, 0.3-0.5 = moderate, 0.5-0.7 = large, 0.7-0.9 = very large, 0.9 = almost perfect and 1.0 = perfect correlation [@Hopkins2009]. A regression model was also used to fit the data, with the average cross-sectional area as the predictor, and 3 RM squat as the dependent variable. The regression model also controlled for body mass. Tests to check for constant variance, normal residuals and problematic observations were performed. No problematic observations were found, so we could safely use all the observations in the analysis
 
 ## Results
 
@@ -43,12 +43,14 @@ hypertrophy <- read_csv("./data/hypertrophy.csv")
 
 # Selecting the variables of interest (AVG_CSA_T1, Squat_3RM_kg)
 hyp <- hypertrophy %>% # Attaching to "hyp"
-  select(SUB_ID, AVG_CSA_T1, Squat_3RM_kg) %>% # Selecting variables of interest
-  
+  select(SUB_ID, AVG_CSA_T1, Squat_3RM_kg, T1_BODY_MASS) %>% # Selecting variables of interest
   filter(!is.na(Squat_3RM_kg), # Removing missing values in Squat_3RM_kg
          !is.na(AVG_CSA_T1))  # Removing missing values in AVG_CSA_T1
 
+# mutate(Squat_3RM_kg = (Squat_3RM_kg/1000)) %>%
 
+#----------------------------------------------------------------------------
+# Can use correlation to see if there is a relatonship 
 
 ######## Correlations ######## 
 # Testing the correlation between "AVG_CSA_T1" and "Squat_3RM_kg" using "hyp" as data
@@ -59,7 +61,6 @@ c <- cor.test(hyp$AVG_CSA_T1, hyp$Squat_3RM_kg)
 c
 # The correlation is 02068658. Perfect correlation = -1 or 1, no correlation = 0
 # Ergo, in this data there is no correlation between muscle size and strength
-
 
 
 ######## Storing the statistics as objects to use in the report ######## 
@@ -82,26 +83,54 @@ df <- c$parameter # df = 28
 
 
 
+#----------------------------------------------------------------------------
+# Can make a better model when adding body mass and using a regression model
+
 ######## Regression model ######## 
 # Using a linear model (lm()) to fit the data
-m1 <- lm(Squat_3RM_kg ~ AVG_CSA_T1, data = hyp) # Storing the regression model as m1
-summary(m1) # Showing the results
+m1 <- lm(Squat_3RM_kg ~ AVG_CSA_T1 + T1_BODY_MASS, data = hyp) # Storing the regression model as m1
+summary(m1) # Showing the results. *Bruk tallene fra linje 2?*
 
+# Printing the regression table using the broom package (tidy()) and kable()
+rtable <- tidy(m1) %>% 
+  kable(col.names = c("", "Estimate", "SE", "t-statistic", "p-value"), # Column names
+        digits = c(NA, 4, 4, 4, 4),# Deciding how many decimals at each value
+        caption = "Table 1: The relationship between muscle mass and strength")
+
+rtable
+# Loock at line 2
+# For every unit increase in CSA, 3 RM sqaut increases with 0,0028 kg.
 
 # Plotting the regression model
 rmodel <- hyp %>%
   ggplot(aes(AVG_CSA_T1, Squat_3RM_kg)) + 
   geom_point() + 
   geom_smooth(method = "lm") + 
-  labs(x = "Lean body mass (kg)",
+  labs(x = "Average CSA",
        y = "3 RM squat (kg)",
        title = "Figure1: The relationship between muscle mass and strength") +
   theme_minimal()
 
 rmodel
 
-# We can also conclude that the correlation and the regression model provides the same results
 
+# Coefficients
+coef(m1)[1] # 25.65533 
+coef(m1)[2] # 0.002812117  Controlled for body mass
+coef(m1)[3] # 1.137279 
+
+# Confidence intevals
+# Linje 1
+confint(m1)[1] # -28.75575
+confint(m1)[4] # 80.06642
+# Linje 2 (disse som skal brukes)
+confint(m1)[2] # -0.004047546 (low CI)
+confint(m1)[5] # 0.00967178 (high CI)
+# Linje 3
+confint(m1)[3] # 0.6264106
+confint(m1)[6] # 1.648148
+
+# Wanted to connect p-value, df osv to objects so I could use them in the text in the discussion, but did not now how
 
 ## ---------------------------------------------------------------------------------
 # Tests to check for constant variance, normal residuals and problematic observations
@@ -143,8 +172,9 @@ hyp %>%
   # Most of the values follows the straight line. The data is quite normal distributed. 
 
 # Can also show the above using residual plots (four plots).
-plot(m1)
 
+plot(m1)
+par(mfrow = c(2,2)) # Two rows and two coloums
 
 
 ######## Independent observations ########
@@ -191,25 +221,34 @@ delta_beta <- (100 * (coef(m1_reduced)[2]/coef(m1)[2] - 1))
 
 ```
 
+#### Correlation model
+There was a `r round(corr, 2)` correlation between average cross-sectional area and 3 RM squat at T1 (95% CI: [`r round(ci1, 3)`, `r round(ci2, 3)`], *t*(`r round(df, 1)`) = `r round(t,3)`, *p* = `r round(p, 2)`).
+
+#### Regression model
 ```{r, echo=FALSE, results='asis', warning=FALSE, message=FALSE}
 # I use this chunck to print the regression figure
 
 rmodel
+rtable
 
 ```
 
-
-There was a `r round(corr, 2)` correlation between average cross-sectional area and 3 RM squat at T1 (95% CI: [`r round(ci1, 2)`, `r round(ci2, 2)`], *t*(`r round(df, 1)`) = `r round(t,3)`, *p* = `r round(p, 2)`).
+When using the regression model and controlling for body mass, there was no relationship between average cross-sectional area and 3 RM squat at T1 (95% CI: [`r round(confint(m1)[2], 3)`, `r round(confint(m1)[5], 3)`], *t*(27) = 0.841, *p* = 0.408). 
 
 
 ## Discussion
-
+#### Correlation model
 The correlation estimate (`r round(corr, 2)`) is less than 0.1, which indicates a *trivial* correlation between average cross-sectional area and 3 RM squat at T1 [@Hopkins2009].
 
+As the confidence interval contain 0 (95% CI: [`r round(ci1, 3)`, `r round(ci2, 3)`]), we can not reject the null hypothesis that states that "at T1, there is no correlation between muscle mass measured as average cross-sectional area and muscle strength measured as 3 RM squat, both when and when not controlling for body mass." This is supported by the *p*-value (`r round(p, 2)`).
 
-As the confidence interval contain 0 (95% CI: [`r round(ci1, 2)`, `r round(ci2, 2)`]), we can not reject the null hypothesis that states that "at T1, there is no correlation between muscle mass measured as average cross-sectional area and muscle strength measured as 3 RM squat." This is supported by the *p*-value (`r round(p, 2)`).
+#### Regression model
+We can se from the regression table that for every unit increase in average cross-sectional area, 3 RM squat increases with 0,0028 kg.
 
-The findings from Haun et al. [-@Haun2019] therefore suggests that there is no correlation between average cross-sectional area and 3 RM squat in trained men before starting a training intervention.
+As the confidence interval contain 0 (95% CI: [`r round(confint(m1)[2], 3)`, `r round(confint(m1)[5], 3)`]), we can not reject the null hypothesis tat states that "at T1, there is no correlation between muscle mass measured as average cross-sectional area and muscle strength measured as 3 RM squat, both when and when not controlling for body mass." This is supported by the *p*-value (`r round(p, 2)`).
+
+#### Conclusion
+The findings from Haun et al. [-@Haun2019] therefore suggests that there is no relationship between average cross-sectional area and 3 RM squat in trained men before starting a training intervention, both when and when not controlling for body mass.
 
 
 ## References

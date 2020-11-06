@@ -170,3 +170,7 @@ The correlation estimate (0.67) is between 0.5 and 0.7, witch indicates a *large
 As the confidence interval do not contain 0 (95% CI: [`r round(ci1, 2)`, `r round(ci2, 2)`]), we can with some certainty reject the null hypothesis that states that "at T1, there is no correlation between muscle mass measured as lean body mass and muscle strength measured as 3RM squat."
 
 The findings from Haun et al. (2019) therefore suggests that there is a *large* correlation between muscle mass and strength, measured as lean body mass and 3RM squat at T1.
+
+
+In the first task discussion
+The alternative hypothesis that states that "the average cross-sectional area at T1 is significantly (*p* < 0.05) greater in HIGH compared to LOW" can also be rejected, as the average cross-sectional area is not significantly (*p* < 0.05) greater in HIGH compared to LOW, but significantly greater in LOW compared to HIGH. 

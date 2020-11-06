@@ -24,7 +24,7 @@ An independent, two sample t-test was used to compare the average cross-sectiona
 
 
 ## Results
-#### Regression analysis
+#### Regression model
 ```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.keep='first'}
 # I use this chunk to run all the code, and to print the regression figure
 
@@ -85,11 +85,13 @@ se <- ttest$stderr # se = 345.6174
 ######## Regression model ######## 
 # Using a linear model (lm()) to fit the data
 m1 <- lm(AVG_CSA_T1 ~ CLUSTER, data = hyp) # Storing the regression model as m1
+# Estimating AVG CSA based on low or high responders
 summary(m1) # Showing the results
 
 
 # Coefficients
-coef(m1)
+coef(m1)[1] # 4538.571 
+coef(m1)[2] # -950.143 
 # Have found the coefficients with the t-test and regression model, but can do it as this as well. 
 # OBS! The Intercept is LOW (4538.571), and the real estimate for HIGH is not -950.143 as it says here and in the regression model (it is the slope), but 4538.571 - 950.143 = 3588.428, just as we find using the t-test.
 
@@ -107,12 +109,13 @@ rtable <- tidy(m1) %>%
         caption = "Table 1: Average cross-sectional area at T1")
         # The intercept is LOW, and CLUSTERHIGH is HIGH
 
-# Making a plot for the regression model WHY DOES THE LINE GET SO WEIRD??
+# Making a plot for the regression model
 hyp %>%
   ggplot(aes(CLUSTER, AVG_CSA_T1)) + 
   geom_point(size = 3, fill = "lightblue", shape = 21) +
   geom_smooth(method = "lm", se = FALSE) + 
-  geom_abline(slope = coef(m1)[2], intercept = coef(m1)[1]) + # The line should go through the mean in LOW and HIGH, why does it not do that?
+  geom_abline(slope = coef(m1)[2], intercept = (coef(m1)[1]-coef(m1)[2])) + 
+  # Intercept = where the graph cuts the y-axis. Had to take 4538.571 - 950.143 = 3588.428 to get the mean i HIGH. 
   labs(x = "Groups",
        y = "Average CSA (cm2)",
        title = "Figure 1: Average cross-sectional area at T1" ) +
