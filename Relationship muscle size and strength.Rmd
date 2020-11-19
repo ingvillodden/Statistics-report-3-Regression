@@ -56,9 +56,10 @@ hyp <- hypertrophy %>% # Attaching to "hyp"
 # Testing the correlation between "AVG_CSA_T1" and "Squat_3RM_kg" using "hyp" as data
 corr <- cor(hyp$AVG_CSA_T1, hyp$Squat_3RM_kg)
 
-c <- cor.test(hyp$AVG_CSA_T1, hyp$Squat_3RM_kg)
+c <- cor.test(hyp$AVG_CSA_T1, hyp$Squat_3RM_kg)  
 
 c
+# Lage dette som tabell? Se måte å gjøre det på under "regression model"
 # The correlation is 02068658. Perfect correlation = -1 or 1, no correlation = 0
 # Ergo, in this data there is no correlation between muscle size and strength
 
@@ -94,8 +95,9 @@ summary(m1) # Showing the results. *Bruk tallene fra linje 2?*
 # Printing the regression table using the broom package (tidy()) and kable()
 rtable <- tidy(m1) %>% 
   kable(col.names = c("", "Estimate", "SE", "t-statistic", "p-value"), # Column names
-        digits = c(NA, 4, 4, 4, 4),# Deciding how many decimals at each value
-        caption = "Table 1: The relationship between muscle mass and strength")
+        digits = c(NA, 4, 4, 4, 4),
+        caption = "Table1: The relationship between muscle mass and strength. Using a regression model with the average cross-sectional area as the predictor, and 3 RM squat as the dependent variable") # Deciding how many decimals at each value
+
 
 rtable
 # Loock at line 2
@@ -107,8 +109,7 @@ rmodel <- hyp %>%
   geom_point() + 
   geom_smooth(method = "lm") + 
   labs(x = "Average CSA",
-       y = "3 RM squat (kg)",
-       title = "Figure1: The relationship between muscle mass and strength") +
+       y = "3 RM squat (kg)") +
   theme_minimal()
 
 rmodel
@@ -225,7 +226,7 @@ delta_beta <- (100 * (coef(m1_reduced)[2]/coef(m1)[2] - 1))
 There was a `r round(corr, 2)` correlation between average cross-sectional area and 3 RM squat at T1 (95% CI: [`r round(ci1, 3)`, `r round(ci2, 3)`], *t*(`r round(df, 1)`) = `r round(t,3)`, *p* = `r round(p, 2)`).
 
 #### Regression model
-```{r, echo=FALSE, results='asis', warning=FALSE, message=FALSE}
+```{r, echo=FALSE, results='asis', warning=FALSE, message=FALSE, fig.cap="Figure1: The relationship between muscle mass and strength. Using a regression model with the average cross-sectional area as the predictor, and 3 RM squat as the dependent variable"}
 # I use this chunck to print the regression figure
 
 rmodel

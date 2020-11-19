@@ -174,3 +174,6 @@ The findings from Haun et al. (2019) therefore suggests that there is a *large* 
 
 In the first task discussion
 The alternative hypothesis that states that "the average cross-sectional area at T1 is significantly (*p* < 0.05) greater in HIGH compared to LOW" can also be rejected, as the average cross-sectional area is not significantly (*p* < 0.05) greater in HIGH compared to LOW, but significantly greater in LOW compared to HIGH. 
+
+
+There was a `r round(corr, 2)` correlation between average cross-sectional area and 3 RM squat at T1 (95% CI: [`r round(confint(m1)[2], 2)`, `r round(confint(m1)[5], 2)`], *t*(`r round(df, 1)`) = `r round(t,3)`, *p* = `r round(p, 2)`).

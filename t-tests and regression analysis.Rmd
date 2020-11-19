@@ -25,7 +25,7 @@ An independent, two sample t-test was used to compare the average cross-sectiona
 
 ## Results
 #### Regression model
-```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.keep='first'}
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.keep='first', fig.cap="Figure 1: Results from a regression model with average cross-sectional area at T1 as the dependent variable and CLUSTER (HIGH and LOW) as the independent variable"}
 # I use this chunk to run all the code, and to print the regression figure
 
 
@@ -106,7 +106,7 @@ model.matrix(AVG_CSA_T1 ~ CLUSTER, data = hyp)
 rtable <- tidy(m1) %>% 
   kable(col.names = c("", "Estimate", "SE", "t-statistic", "p-value"), # Column names
         digits = c(NA, 1, 1, 2, 4),# Deciding how many decimals at each value
-        caption = "Table 1: Average cross-sectional area at T1")
+        caption = "Table 1: Results from a regression model with average cross-sectional area at T1 as the dependent variable and CLUSTER (HIGH and LOW) as the independent variable")
         # The intercept is LOW, and CLUSTERHIGH is HIGH
 
 # Making a plot for the regression model
@@ -117,8 +117,7 @@ hyp %>%
   geom_abline(slope = coef(m1)[2], intercept = (coef(m1)[1]-coef(m1)[2])) + 
   # Intercept = where the graph cuts the y-axis. Had to take 4538.571 - 950.143 = 3588.428 to get the mean i HIGH. 
   labs(x = "Groups",
-       y = "Average CSA (cm2)",
-       title = "Figure 1: Average cross-sectional area at T1" ) +
+       y = "Average CSA (cm2)") +
   theme_minimal()
 # We can see that there is a outlier in the data set, and therefore we should take a closer look at it.
 
